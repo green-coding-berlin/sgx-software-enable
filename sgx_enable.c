@@ -112,15 +112,15 @@ int main (int argc, char *argv[])
 			fprintf(stderr, "sgx_cap_get_status returned 0x%04x\n", status);
 			break;
 		}
-		return 1;
+		return 0;
 	}
 
 	if ( result == SGX_ENABLED ) {
 		printf("Intel SGX is already enabled on this system\n");
-		return 0;
+		return 1;
 	} else if ( result == SGX_DISABLED_UNSUPPORTED_CPU ) {
 		printf("This CPU does not support Intel SGX\n");
-		return 1;
+		return 0;
 	} else if ( result == SGX_DISABLED_LEGACY_OS ) {
 		printf("This processor supports Intel SGX but was booted in legacy mode.\n");
 		printf("A UEFI boot is required to determine whether or not your BIOS\n");
@@ -131,20 +131,20 @@ int main (int argc, char *argv[])
 	} else if ( result == SGX_DISABLED ) {
 		printf("Intel SGX is explicitly disabled on your system. It may be\n");
 		printf("disabled in the BIOS, or the BIOS may not support Intel SGX.\n");
-		return 1;
+		return 0;
 	} else if ( result == SGX_DISABLED_MANUAL_ENABLE ) {
 		printf("Intel SGX is explicitly disabled, and your BIOS does not\n");
 		printf("support the \"software enable\" option. Check your BIOS for an\n");
 		printf("explicit option to enable Intel SGX.\n");
-		return 1;
+		return 0;
 	} else if ( result == SGX_DISABLED_REBOOT_REQUIRED ) {
 		printf("The software enable has been performed on this system and\n");
 		printf("Intel SGX will be enabled after the system is rebooted.\n");
-		return 0;
+		return 1;
 	} else if ( result != SGX_DISABLED_SCI_AVAILABLE ) {
 		printf("I couldn't make sense of your system.\n");
 		fprintf(stderr, "sgx_cap_get_status returned 0x%04x\n", result);
-		return 1;
+		return 0;
 	}
 
 	if ( flag_status ) {
@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
 	// code should never be executed. Should only be run with -s flag
 	fprintf(stderr"Enabling Intel SGX has been removed from this code!\n");
 
-	return 0;
+	return 1;
 }
 
 void usage ()
