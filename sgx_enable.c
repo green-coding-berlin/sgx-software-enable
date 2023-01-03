@@ -152,25 +152,8 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 
-	/* Now try to enable Intel SGX */
-
-	status= sgx_cap_enable_device(&result);
-	if ( status != SGX_SUCCESS ) {
-		switch(status) {
-		case SGX_ERROR_NO_PRIVILEGE:
-			printf("You may need to rerun this utility as root\n");
-			break;
-		case SGX_ERROR_INVALID_PARAMETER:
-		case SGX_ERROR_UNEXPECTED:
-			printf("I could not attempt the software enable: ");
-		default:
-			printf("sgx_cap_enable_device returned 0x%04x\n", status);
-		}
-		return 1;
-	}
-
-	printf("Software enable has been set. Please reboot your system to finish\n");
-	printf("enabling Intel SGX.\n");
+	// code should never be executed. Should only be run with -s flag
+	fprintf(stderr"Enabling Intel SGX has been removed from this code!\n");
 
 	return 0;
 }
@@ -273,7 +256,7 @@ sgx_status_t sgx_cap_get_status (sgx_device_status_t *sgx_device_status)
 			perror(EFIFS_PATH);
 			return SGX_ERROR_UNEXPECTED;
 		}
-	} 
+	}
 
 	if ( ! has_efifs ) {
 		/*
@@ -292,14 +275,14 @@ sgx_status_t sgx_cap_get_status (sgx_device_status_t *sgx_device_status)
 				*sgx_device_status= SGX_DISABLED_LEGACY_OS;
 				break;
 			default:
-				/* 
+				/*
 				 * We don't have enough information to figure this out
 				 * so report SGX_DISABLED.
 				 */
 				*sgx_device_status= SGX_DISABLED;
 			}
 
-		} 
+		}
 
 		return SGX_SUCCESS;
 	}
@@ -397,13 +380,13 @@ int _is_sgx_available ()
 
 	/*
 	 * Enumerate the subleafs for the EPC. At least one must be a valid
-	 * subleaf that describes a page. 
+	 * subleaf that describes a page.
 	 */
 
 	while (1) {
 		__cpuid(info, 0x12, subleaf);
 
-		/* 
+		/*
 		 * Is this an invalid subleaf? If we've hit an invalid subleaf
 		 * before finding a valid subleaf with a non-zero page size,
 		 * then we have no EPC memory allocated, and thus no Intel SGX
@@ -429,91 +412,4 @@ int _is_sgx_available ()
 	/* We'll never get here, but we need to keep the compiler happy */
 
 	return 0;
-}
-
-sgx_status_t sgx_cap_enable_device (sgx_device_status_t *sgx_device_status)
-{
-	sgx_status_t status;
-	struct epcbios_stuct {
-		uint32_t attrs;
-		uint32_t sprmbins;
-		uint32_t maxepcsz;
-		/* There's more, but this is all we need */
-	} epcbios;
-	struct epcsw_struct {
-		uint32_t attrs;
-		uint32_t maxepcsz;
-	} epcsw;
-	FILE *fefivar;
-
-	if ( sgx_device_status == NULL ) return SGX_ERROR_INVALID_PARAMETER;
-
-	status= sgx_cap_get_status(sgx_device_status);
-	if ( status != SGX_SUCCESS ) return status;
-
-	/*
-	 * If we get back anything other than SGX_DISABLED_SCI_AVAILABLE
-	 * then return, because there is nothing to do.
-	 */
-
-	if ( *sgx_device_status != SGX_DISABLED_SCI_AVAILABLE )
-		return SGX_SUCCESS;
-
-	/* Attempt the software enable */
-
-	/* First, read the EPCBIOS EFI variable to get the max EPC size */
-
-	fefivar= fopen(EFIVAR_EPCBIOS, "r");
-	if ( fefivar == NULL ) {
-		perror(EFIVAR_EPCBIOS);
-		if ( errno == EACCES ) return SGX_ERROR_NO_PRIVILEGE;
-
-		return SGX_ERROR_UNEXPECTED;
-	}
-
-	/*
-	 * The first 4 bytes are the EFI variable attributes. Data starts
-	 * at offset 0x4, and the value we want is a UINT32 at offset 0x8.
-	 */
-
-	if ( fread(&epcbios, sizeof(epcbios), 1, fefivar) != 1 ) {
-		fclose(fefivar);
-		return SGX_ERROR_UNEXPECTED;
-	}
-
-	if ( fclose(fefivar)) {
-		return SGX_ERROR_UNEXPECTED;
-	}
-
-	/*
-	 * Now create the EPCSW EFI variable. The variable data is a 
-	 * single UINT32 specifying the requested EPC size.
-	 */
-
-	epcsw.attrs= epcbios.attrs;
-	epcsw.maxepcsz= epcbios.maxepcsz;
-
-	fefivar= fopen(EFIVAR_EPCSW, "w");
-	if ( fefivar == NULL ) {
-		perror(EFIVAR_EPCSW);
-		if ( errno == EACCES ) return SGX_ERROR_NO_PRIVILEGE;
-
-		return SGX_ERROR_UNEXPECTED;
-	}
-
-	/* Write out the EPCSW structure */
-
-	if ( fwrite(&epcsw, sizeof(epcsw), 1, fefivar) != 1 ) {
-		unlink(EFIVAR_EPCSW);
-		fclose(fefivar);
-		return SGX_ERROR_UNEXPECTED;
-	}
-
-	if ( fclose(fefivar)) {
-		return SGX_ERROR_UNEXPECTED;
-	}
-
-	*sgx_device_status= SGX_DISABLED_REBOOT_REQUIRED;
-
-	return SGX_SUCCESS;
 }

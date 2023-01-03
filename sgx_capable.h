@@ -65,7 +65,10 @@ sgx_status_t sgx_is_capable(int* sgx_capable);
  * @param sgx_device_status[out] The status of SGX device.
  * @return If the function succeeds, return SGX_SUCCESS, any other value indicates an error.
  */
-sgx_status_t sgx_cap_enable_device(sgx_device_status_t* sgx_device_status);
+// this function has been removed in our fork
+// when SGX is enabled and BIOS has no option to disable SGX one is trapped with the feature
+// only possiblity is to re-flash BIOS (and EEPROM recovery if present)
+// sgx_status_t sgx_cap_enable_device(sgx_device_status_t* sgx_device_status);
 
 /*
 * Function used to query SGX device status.
