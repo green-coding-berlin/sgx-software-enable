@@ -153,7 +153,7 @@ int main (int argc, char *argv[])
 	}
 
 	// code should never be executed. Should only be run with -s flag
-	fprintf(stderr"Enabling Intel SGX has been removed from this code!\n");
+	fprintf(stderr, "Enabling Intel SGX has been removed from this code!\n");
 
 	return 1;
 }
